@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Firebase Firestore Demo</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+        min-height: 100vh;
+        padding: 40px 20px;
+        color: #333;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 40px;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header h1 {
+        font-size: 2.8rem;
+        margin-bottom: 10px;
+      }
+
+      header p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+      }
+
+      .app-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+      }
+
+      .form-section,
+      .submissions-section {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .form-section {
+        flex: 1;
+        min-width: 300px;
+      }
+
+      .submissions-section {
+        flex: 2;
+        min-width: 300px;
+      }
+
+      h2 {
+        margin-bottom: 25px;
+        color: #2c3e50;
+        font-size: 1.8rem;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #2c3e50;
+      }
+
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border 0.3s;
+      }
+
+      input:focus,
+      textarea:focus,
+      select:focus {
+        border-color: #3498db;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      }
+
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+
+      button {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 14px 25px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s;
+        width: 100%;
+        margin-top: 10px;
+      }
+
+      button:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .delete-btn {
+        background: #e74c3c;
+      }
+
+      .delete-btn:hover {
+        background: #c0392b;
+      }
+
+      .submission-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 4px solid #3498db;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        position: relative;
+      }
+
+      .submission-card h3 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+      }
+
+      .submission-card p {
+        margin: 8px 0;
+        color: #555;
+      }
+
+      .card-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+      }
+
+      .timestamp {
+        font-size: 0.85rem;
+        color: #7f8c8d;
+      }
+
+      .loader {
+        text-align: center;
+        padding: 30px;
+        color: #7f8c8d;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 30px;
+        color: #7f8c8d;
+        font-style: italic;
+      }
+
+      .status {
+        padding: 10px;
+        border-radius: 5px;
+        text-align: center;
+        margin-top: 20px;
+        font-weight: 500;
+        display: none;
+      }
+
+      .success {
+        background: #d4edda;
+        color: #155724;
+        display: block;
+      }
+
+      .error {
+        background: #f8d7da;
+        color: #721c24;
+        display: block;
+      }
+
+      .version-info {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 10px;
+        border-radius: 8px;
+        margin-top: 20px;
+        font-size: 0.9rem;
+      }
+
+      @media (max-width: 768px) {
+        .app-container {
+          flex-direction: column;
+        }
+
+        header h1 {
+          font-size: 2.2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Firebase Firestore Demo</h1>
+        <p>Submit data to Firestore and manage your submissions</p>
+        <div class="version-info">
+          <p>Using Firebase v8.10.1 (compatible version)</p>
+        </div>
+      </header>
+
+      <div class="app-container">
+        <section class="form-section">
+          <h2>Submit Form</h2>
+          <form id="dataForm">
+            <div class="form-group">
+              <label for="name">Full Name</label>
+              <input
+                type="text"
+                id="name"
+                placeholder="Enter your name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="department">Department</label>
+              <select id="department" required>
+                <option value="">Select Department</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Sales">Sales</option>
+                <option value="HR">Human Resources</option>
+                <option value="Finance">Finance</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="message">Message</label>
+              <textarea
+                id="message"
+                placeholder="Enter your message"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="rating">Satisfaction Rating</label>
+              <input type="range" id="rating" min="1" max="10" value="5" />
+              <div style="display: flex; justify-content: space-between">
+                <span>1</span>
+                <span>5</span>
+                <span>10</span>
+              </div>
+            </div>
+
+            <button type="submit">Submit Form</button>
+          </form>
+          <div id="submitStatus" class="status"></div>
+        </section>
+
+        <section class="submissions-section">
+          <h2>Form Submissions</h2>
+          <div id="submissionsContainer">
+            <div class="loader">Loading submissions...</div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Using Firebase v8.10.1 to avoid module issues -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+      // Firebase configuration (using v8 syntax)
+      const firebaseConfig = {
+        apiKey: "AIzaSyDY0waUgAb_uscPvlrsmG8f_q8MhicvxjU",
+        authDomain: "college-d-f3cbc.firebaseapp.com",
+        projectId: "college-d-f3cbc",
+        storageBucket: "college-d-f3cbc.appspot.com",
+        messagingSenderId: "171446435277",
+        appId: "1:171446435277:web:37e167dd0c8387b2fad884",
+        measurementId: "G-79PQ7PNGFH",
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const db = firebase.firestore();
+
+      // Reference to the form submissions collection
+      const submissionsRef = db.collection("formSubmissions");
+
+      // DOM elements
+      const dataForm = document.getElementById("dataForm");
+      const submissionsContainer = document.getElementById(
+        "submissionsContainer"
+      );
+      const submitStatus = document.getElementById("submitStatus");
+
+      // Function to save form data to Firestore
+      async function saveFormData(formData) {
+        try {
+          // Add a new document with a generated ID
+          await submissionsRef.add({
+            name: formData.name,
+            email: formData.email,
+            department: formData.department,
+            message: formData.message,
+            rating: parseInt(formData.rating),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          });
+
+          showStatus("Form submitted successfully!", "success");
+          dataForm.reset();
+          fetchSubmissions(); // Refresh the list
+        } catch (error) {
+          console.error("Error adding document: ", error);
+          showStatus(`Error: ${error.message}`, "error");
+        }
+      }
+
+      // Function to fetch all submissions from Firestore
+      async function fetchSubmissions() {
+        try {
+          submissionsContainer.innerHTML =
+            '<div class="loader">Loading submissions...</div>';
+
+          const querySnapshot = await submissionsRef
+            .orderBy("createdAt", "desc")
+            .get();
+
+          if (querySnapshot.empty) {
+            submissionsContainer.innerHTML =
+              '<div class="no-data">No submissions found</div>';
+            return;
+          }
+
+          let submissionsHTML = "";
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            const timestamp = data.createdAt
+              ? new Date(data.createdAt.toDate()).toLocaleString()
+              : "Just now";
+
+            submissionsHTML += `
+                        <div class="submission-card" data-id="${doc.id}">
+                            <h3>${data.name}</h3>
+                            <p><strong>Email:</strong> ${data.email}</p>
+                            <p><strong>Department:</strong> ${data.department}</p>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <p><strong>Rating:</strong> ${data.rating}/10</p>
+                            <div class="card-footer">
+                                <div class="timestamp">Submitted: ${timestamp}</div>
+                                <button class="delete-btn" onclick="deleteSubmission('${doc.id}')">Delete</button>
+                            </div>
+                        </div>
+                    `;
+          });
+
+          submissionsContainer.innerHTML = submissionsHTML;
+        } catch (error) {
+          console.error("Error getting documents: ", error);
+          submissionsContainer.innerHTML = `<div class="error">Error loading data: ${error.message}</div>`;
+        }
+      }
+
+      // Function to delete a submission
+      async function deleteSubmission(id) {
+        if (confirm("Are you sure you want to delete this submission?")) {
+          try {
+            await submissionsRef.doc(id).delete();
+            fetchSubmissions(); // Refresh the list
+            showStatus("Submission deleted successfully!", "success");
+          } catch (error) {
+            console.error("Error deleting document: ", error);
+            showStatus(`Error: ${error.message}`, "error");
+          }
+        }
+      }
+
+      // Function to show status messages
+      function showStatus(message, type) {
+        submitStatus.textContent = message;
+        submitStatus.className = "status " + type;
+
+        // Hide status after 5 seconds
+        setTimeout(() => {
+          submitStatus.style.display = "none";
+        }, 5000);
+      }
+
+      // Event listener for form submission
+      dataForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = {
+          name: document.getElementById("name").value,
+          email: document.getElementById("email").value,
+          department: document.getElementById("department").value,
+          message: document.getElementById("message").value,
+          rating: document.getElementById("rating").value,
+        };
+
+        saveFormData(formData);
+      });
+
+      // Initialize the app by fetching submissions
+      window.onload = fetchSubmissions;
+      window.deleteSubmission = deleteSubmission; // Make function globally accessible
+    </script>
+  </body>
+</html>
